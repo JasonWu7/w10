@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.22.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.5.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.21.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+    crossorigin="anonymous"></script>
+
+  <!-- CSS file -->
+  <link rel="stylesheet" type="text/css" href="css/styles.css" media="all">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
+</head>
+
+<body>
+  <div class="main text-center">
+    <h2>Mental Health Disorders and Depression Data Statistics</h2>
+
+    <div class="row">
+      <div class="col">
+      </div>
+      <div class="col-8" id="lollipops">
+      </div>
+      <div class="col">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+      </div>
+      <div class="col-8" id="choropleth_map">
+      </div>
+      <div class="col">
+      </div>
+    </div>
+
+  </div>
+
+  <div id="choropleth_map"></div>
+
+  <script type="text/javascript">
+
+    var spec = {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "title": {
+        "text": {
+          "signal": " 'Statistics on the Number of Patients with ' + replace(select_category, ' (%)', '') + ' (Year: ' + select_year + ')' "
+        },
+        "subtitle": ""
+      },
+      "width": 800,
+      "height": 400,
+      "projection": { "type": "naturalEarth1" },
+      "data": {
+        "url": "https://raw.githubusercontent.com/JasonWu7/w9/main/data/ne_110m_countries.topojson",
+        "format": { "type": "topojson", "feature": "ne_110m_admin_0_countries" }
+      },
+      "params": [
+        {
+          "name": "select_year", "value": 2017,
+          "bind": { "input": "range", "min": 1990, "max": 2017, "step": 1, "name": "Select Year: " },
+        },
+        {
+          "name": "select_category",
+          "value": "Schizophrenia (%)",
+          "bind": {
+            "input": "select",
+            "options": [
+              "Schizophrenia (%)",
+              "Bipolar disorder (%)",
+              "Eating disorders (%)",
+              "Anxiety disorders (%)",
+              "Drug use disorders (%)",
+              "Depression (%)",
+              "Alcohol use disorders (%)",
+            ],
+            "labels": [
+              "Schizophrenia",
+              "Bipolar disorder",
+              "Eating disorders",
+              "Anxiety disorders",
+              "Drug use disorders",
+              "Depression",
+              "Alcohol use disorders",
+            ],
+            "name": "Select Category: "
+          }
+        },
+      ],
+      "layer": [
+        {
+          "transform": [
+            {
+              "calculate": "'Data is not available in ' + datum.properties.NAME",
+              "as": "note"
+            }
+          ],
+          "mark": { "type": "geoshape", "fill": "lightgray", "stroke": "white" },
+          "encoding": { "tooltip": { "field": "note" } }
+        },
+        {
+          "data": {
+            "url": "https://raw.githubusercontent.com/JasonWu7/w9/main/data/combined_dataset_1_2.csv",
+          },
+
+          "transform": [
+            {
+              "lookup": "Code",
+              "from": {
+                "data": {
+                  "url": "https://raw.githubusercontent.com/JasonWu7/w9/main/data/ne_110m_countries.topojson",
+                  "format": { "type": "topojson", "feature": "ne_110m_admin_0_countries" }
+                },
+                "key": "properties.ISO_A3_EH",
+              },
+              "as": "geo"
+            },
+            { "filter": "datum.Year == select_year" },
+            {
+              "calculate": "datum[select_category] * datum['Population'] / 10000",
+              "as": "num_patient_per_10k"
+            }
+          ],
+          "mark": { "type": "geoshape", "stroke": "white" },
+          "encoding": {
+            "shape": { "field": "geo", "type": "geojson" },
+            "color": {
+              "field": "num_patient_per_10k",
+              "type": "quantitative",
+              "scale": {
+                "type": "log",
+                "domain": [1, 10, 100, 1000, 10000, 100000],
+              },
+              "legend": { "title": "Number of patients per 10,000 population", "titleLimit": "250" }
+            },
+            "tooltip": [
+              { "field": "Entity", "type": "nominal", "title": "Country" },
+              { "field": "num_patient_per_10k", "type": "quantitative", "format": ".2f", "title": "Number of patients per 10,000 population" }
+            ],
+          },
+        },
+        {
+          "data": {
+            "url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/7_others/oceans.topojson",
+            "format": { "type": "topojson", "feature": "oceans" }
+          },
+          "mark": { "type": "geoshape", "fill": "skyblue" }
+        },
+        {
+          "data": {
+            "url": "https://raw.githubusercontent.com/JasonWu7/w9/main/data/ne_110m_countries.topojson",
+            "format": { "type": "topojson", "feature": "ne_110m_graticules_30" }
+          },
+          "mark": { "type": "geoshape", "fill": null, "stroke": "white" },
+        }
+      ],
+    };
+
+    // Embed the updated spec into the #choropleth_map element
+    vegaEmbed('#choropleth_map', spec).then(function (result) {
+    }).catch(console.error);
+
+    var spec2 = {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "title": {
+        "text": {
+          "signal": "Comparision"
+        }
+      },
+      "width": 800,
+      "height": 300,
+      "data": {
+        "url": "https://raw.githubusercontent.com/JasonWu7/w9/main/data/combined_dataset_1_2.csv",
+      },
+      "layer": [
+        {
+          "description": "Lollipop Stick",
+          "mark": { "type": "bar" },
+          "encoding": {
+            "x": {
+              "field": "Number",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "Category",
+              "type": "ordinal"
+            },
+            "color": {
+              "condition": {
+                "test": "datum['Number']<0",
+                "value": "Red"
+              },
+              "value": "Black"
+            }
+          }
+        },
+        {
+          "description": "Lollipop",
+          "mark": {
+            "type": "point",
+            "tooltip": true
+          },
+          "encoding": {
+            "color": {
+              "condition": {
+                "test": "datum['Number']<0",
+                "value": "Red"
+              },
+              "value": "Black"
+            },
+            "x": {
+              "field": "Number",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "Category",
+              "type": "ordinal"
+            }
+          }
+        },
+        {
+          "description": "Value label",
+          "mark": {
+            "type": "text",
+            "baseline": "top",
+            "dy": -20
+          },
+          "encoding": {
+            "color": {
+              "condition": {
+                "test": "datum['Number']<0",
+                "value": "Red"
+              },
+              "value": "Black"
+            },
+            "x": {
+              "field": "Number",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "Category",
+              "type": "ordinal"
+            },
+            "text": { "field": "Number" }
+          }
+        },
+        {
+          "description": "0 Baseline",
+          "mark": "line",
+          "encoding": {
+            "x": { "datum": 0 },
+            "y": { "field": "Category" }
+          }
+        }
+      ]
+    }
+
+    // Define the specification for the lollipop chart
+    var lollipopSpec = {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "title": {
+        "text": {
+          "signal": " 'Statistics on the Number of Patients with ' + replace(select_category, ' (%)', '') + ' (Year: ' + select_year + ')' "
+        },
+        "subtitle": ""
+      },
+      "width": 600,
+      "height": 200,
+      "params": [
+        {
+          "name": "select_year", "value": 2017,
+          "bind": { "input": "range", "min": 1990, "max": 2017, "step": 1, "name": "Select Year: " },
+        },
+        {
+          "name": "select_category",
+          "value": "Schizophrenia (%)",
+          "bind": {
+            "input": "select",
+            "options": [
+              "Schizophrenia (%)",
+              "Bipolar disorder (%)",
+              "Eating disorders (%)",
+              "Anxiety disorders (%)",
+              "Drug use disorders (%)",
+              "Depression (%)",
+              "Alcohol use disorders (%)",
+            ],
+            "labels": [
+              "Schizophrenia",
+              "Bipolar disorder",
+              "Eating disorders",
+              "Anxiety disorders",
+              "Drug use disorders",
+              "Depression",
+              "Alcohol use disorders",
+            ],
+            "name": "Select Category: "
+          }
+        },
+        {
+        "name": "show_top",
+        "value": true,
+        "bind": { "input": "radio", "options": [true, false], "labels": ["Show Top 5", "Show Bottom 5"], "name": "Show: " },
+      },
+      ],
+      "data": {
+        "url": "https://raw.githubusercontent.com/JasonWu7/w9/main/data/combined_dataset_1_2.csv",
+      },
+      "transform": [
+        { "filter": "datum.Year == select_year" },
+        { "filter": "datum.Entity != 'World'"},
+        { "filter": "datum[select_category]* datum['Population'] / 10000 > 0"},
+        {
+          "calculate": "datum[select_category] * datum['Population'] / 10000",
+          "as": "num_patient_per_10k"
+        },
+        { "window": [{ "op": "rank", "as": "rank" }], "sort": [{ "field": "num_patient_per_10k", "order": 'show_top ? "descending" : "ascending"' }] },
+        { "filter": "(datum.rank <= 5)" }
+      ],
+      "layer": [
+        {
+          "description": "Lollipop Stick",
+          "transform": [
+            { "filter": "datum.Year == select_year" },
+            {
+              "calculate": "datum[select_category] * datum['Population'] / 10000",
+              "as": "num_patient_per_10k"
+            }
+          ],
+          "mark": { "type": "bar", "cornerRadiusEnd": 2, "height": {"band": 0.05}},
+          "encoding": {
+            "x": {
+              "field": "num_patient_per_10k",
+              "title": "Number of Patient per 10k Population",
+              "type": "quantitative",
+              "scale": {
+                "type": "linear",
+              },
+            },
+            "y": {
+              "field": "Entity",
+              "title": "Country",
+              "sort": "num_patient_per_10k"
+            },
+            "color": {
+              "value": "Black"
+            },
+            "tooltip": [
+              { "field": "Entity", "type": "nominal", "title": "Country" },
+              { "field": "num_patient_per_10k", "type": "quantitative", "format": ".2f", "title": "Number of patients per 10,000 population" }
+            ],
+          },
+        },
+        {
+          "description": "Lollipop",
+          "transform": [
+            { "filter": "datum.Year == select_year" },
+            {
+              "calculate": "datum[select_category] * datum['Population'] / 10000",
+              "as": "num_patient_per_10k"
+            }
+          ],
+          "mark": {
+            "type": "circle",
+            "size": 100,
+            "tooltip": true
+          },
+          "encoding": {
+            "color": {
+              "value": "Red"
+            },
+            "x": {
+              "field": "num_patient_per_10k",
+              "type": "quantitative",
+              "scale": {
+                "type": "linear",
+              },
+            },
+            "y": {
+              
+              "field": "Entity",
+              "sort": "-x"
+              
+            },
+            "tooltip": [
+              { "field": "Entity", "type": "nominal", "title": "Country" },
+              { "field": "num_patient_per_10k", "type": "quantitative", "format": ".2f", "title": "Number of patients per 10,000 population" }
+            ],
+          },
+          
+        }
+      ],
+    };
+
+    // Embed the lollipop chart into the #lollipops element
+    vegaEmbed('#lollipops', lollipopSpec).then(function (result) {
+    }).catch(console.error);
+
+  </script>
+
+</body>
+
+</html>
