@@ -139,7 +139,7 @@
             },
             "tooltip": [
               { "field": "Entity", "type": "nominal", "title": "Country" },
-              { "field": "num_patient_per_10k", "type": "quantitative", "format": ".2f", "title": "Number of patients per 10,000 population" }
+              { "field": "num_patient_per_10k", "type": "quantitative", "format": ",.0f", "title": "Number of patients per 10,000 population" }
             ],
           },
         },
@@ -164,107 +164,12 @@
     vegaEmbed('#choropleth_map', spec).then(function (result) {
     }).catch(console.error);
 
-    var spec2 = {
-      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-      "title": {
-        "text": {
-          "signal": "Comparision"
-        }
-      },
-      "width": 800,
-      "height": 300,
-      "data": {
-        "url": "https://raw.githubusercontent.com/JasonWu7/w9/main/data/combined_dataset_1_2.csv",
-      },
-      "layer": [
-        {
-          "description": "Lollipop Stick",
-          "mark": { "type": "bar" },
-          "encoding": {
-            "x": {
-              "field": "Number",
-              "type": "quantitative"
-            },
-            "y": {
-              "field": "Category",
-              "type": "ordinal"
-            },
-            "color": {
-              "condition": {
-                "test": "datum['Number']<0",
-                "value": "Red"
-              },
-              "value": "Black"
-            }
-          }
-        },
-        {
-          "description": "Lollipop",
-          "mark": {
-            "type": "point",
-            "tooltip": true
-          },
-          "encoding": {
-            "color": {
-              "condition": {
-                "test": "datum['Number']<0",
-                "value": "Red"
-              },
-              "value": "Black"
-            },
-            "x": {
-              "field": "Number",
-              "type": "quantitative"
-            },
-            "y": {
-              "field": "Category",
-              "type": "ordinal"
-            }
-          }
-        },
-        {
-          "description": "Value label",
-          "mark": {
-            "type": "text",
-            "baseline": "top",
-            "dy": -20
-          },
-          "encoding": {
-            "color": {
-              "condition": {
-                "test": "datum['Number']<0",
-                "value": "Red"
-              },
-              "value": "Black"
-            },
-            "x": {
-              "field": "Number",
-              "type": "quantitative"
-            },
-            "y": {
-              "field": "Category",
-              "type": "ordinal"
-            },
-            "text": { "field": "Number" }
-          }
-        },
-        {
-          "description": "0 Baseline",
-          "mark": "line",
-          "encoding": {
-            "x": { "datum": 0 },
-            "y": { "field": "Category" }
-          }
-        }
-      ]
-    }
-
     // Define the specification for the lollipop chart
     var lollipopSpec = {
       "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
       "title": {
         "text": {
-          "signal": " 'Statistics on the Number of Patients with ' + replace(select_category, ' (%)', '') + ' (Year: ' + select_year + ')' "
+          "signal": " 'Statistics on the Top 5 countries with most of ' + replace(select_category, ' (%)', '') + ' Patients (Year: ' + select_year + ')' "
         },
         "subtitle": ""
       },
@@ -300,25 +205,20 @@
             ],
             "name": "Select Category: "
           }
-        },
-        {
-        "name": "show_top",
-        "value": true,
-        "bind": { "input": "radio", "options": [true, false], "labels": ["Show Top 5", "Show Bottom 5"], "name": "Show: " },
-      },
+        }
       ],
       "data": {
         "url": "https://raw.githubusercontent.com/JasonWu7/w9/main/data/combined_dataset_1_2.csv",
       },
       "transform": [
         { "filter": "datum.Year == select_year" },
-        { "filter": "datum.Entity != 'World'"},
-        { "filter": "datum[select_category]* datum['Population'] / 10000 > 0"},
+        { "filter": "datum.Entity != 'World'" },
+        { "filter": "datum[select_category]* datum['Population'] / 10000 > 0" },
         {
           "calculate": "datum[select_category] * datum['Population'] / 10000",
           "as": "num_patient_per_10k"
         },
-        { "window": [{ "op": "rank", "as": "rank" }], "sort": [{ "field": "num_patient_per_10k", "order": 'show_top ? "descending" : "ascending"' }] },
+        { "window": [{ "op": "rank", "as": "rank" }], "sort": [{ "field": "num_patient_per_10k", "order": "descending" }] },
         { "filter": "(datum.rank <= 5)" }
       ],
       "layer": [
@@ -331,7 +231,7 @@
               "as": "num_patient_per_10k"
             }
           ],
-          "mark": { "type": "bar", "cornerRadiusEnd": 2, "height": {"band": 0.05}},
+          "mark": { "type": "bar", "cornerRadiusEnd": 2, "height": { "band": 0.05 } },
           "encoding": {
             "x": {
               "field": "num_patient_per_10k",
@@ -347,11 +247,11 @@
               "sort": "num_patient_per_10k"
             },
             "color": {
-              "value": "Black"
+              "value": "Grey"
             },
             "tooltip": [
               { "field": "Entity", "type": "nominal", "title": "Country" },
-              { "field": "num_patient_per_10k", "type": "quantitative", "format": ".2f", "title": "Number of patients per 10,000 population" }
+              { "field": "num_patient_per_10k", "type": "quantitative", "format": ",.0f", "title": "Number of patients per 10,000 population" }
             ],
           },
         },
@@ -364,14 +264,10 @@
               "as": "num_patient_per_10k"
             }
           ],
-          "mark": {
-            "type": "circle",
-            "size": 100,
-            "tooltip": true
-          },
+          
           "encoding": {
             "color": {
-              "value": "Red"
+              "value": "#08B2E3"
             },
             "x": {
               "field": "num_patient_per_10k",
@@ -381,18 +277,45 @@
               },
             },
             "y": {
-              
+
               "field": "Entity",
               "sort": "-x"
-              
+
             },
             "tooltip": [
               { "field": "Entity", "type": "nominal", "title": "Country" },
-              { "field": "num_patient_per_10k", "type": "quantitative", "format": ".2f", "title": "Number of patients per 10,000 population" }
+              { "field": "num_patient_per_10k", "type": "quantitative", "format": ",.0f", "title": "Number of patients per 10,000 population" }
             ],
           },
-          
-        }
+          "layer":[
+            {"mark": {
+            "type": "circle",
+            "size": 100,
+            "tooltip": true
+          }},{
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "middle",
+            "dy": 10,
+            "dx": -50,
+            "fontSize": 11.5,
+            "fontStyle": "italic"
+          },
+          "encoding": {
+            "text": { "field": "num_patient_per_10k", "format": ",.0f", "type": "quantitative" },
+            "color": { "value": "black" },
+            "opacity": {
+              "condition": {
+                "test": "datum.rank <= 5",
+                "value": 1
+              },
+              "value": 0
+            },
+          }
+        }]
+        },
+        
       ],
     };
 
@@ -400,6 +323,10 @@
     vegaEmbed('#lollipops', lollipopSpec).then(function (result) {
     }).catch(console.error);
 
+    // var specTest = "./js/combine.vg.json"
+    // // Embed the lollipop chart into the #lollipops element
+    // vegaEmbed('#lollipops', specTest).then(function (result) {
+    // }).catch(console.error);
   </script>
 
 </body>
